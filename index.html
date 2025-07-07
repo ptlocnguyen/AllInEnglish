@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Flashcard Vocabulary | AllENInHere</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+
+    .flashcard {
+      width: 300px;
+      height: 200px;
+      perspective: 1000px;
+      margin-bottom: 20px;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+      cursor: pointer;
+    }
+
+    .card.flip {
+      transform: rotateY(180deg);
+    }
+
+    .card-side {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backface-visibility: hidden;
+      font-size: 24px;
+    }
+
+    .card-front {
+      background-color: #1e88e5;
+      color: white;
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+      background-color: #fbc02d;
+      color: #333;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 20px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #42a5f5;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #1e88e5;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Flashcard Học Từ Vựng</h1>
+
+  <div class="flashcard" onclick="flipCard()">
+    <div class="card" id="card">
+      <div class="card-side card-front" id="card-front">Loading...</div>
+      <div class="card-side card-back" id="card-back">...</div>
+    </div>
+  </div>
+
+  <div class="buttons">
+    <button onclick="prevWord()">◀ Trước</button>
+    <button onclick="nextWord()">Tiếp ▶</button>
+  </div>
+
+  <script>
+    const flashcards = [
+      { word: "apple", meaning: "quả táo" },
+      { word: "book", meaning: "quyển sách" },
+      { word: "run", meaning: "chạy" },
+      { word: "happy", meaning: "vui vẻ" },
+      { word: "computer", meaning: "máy tính" },
+    ];
+
+    let currentIndex = 0;
+    const card = document.getElementById("card");
+    const front = document.getElementById("card-front");
+    const back = document.getElementById("card-back");
+
+    function updateCard() {
+      const item = flashcards[currentIndex];
+      front.textContent = item.word;
+      back.textContent = item.meaning;
+      card.classList.remove("flip");
+    }
+
+    function nextWord() {
+      currentIndex = (currentIndex + 1) % flashcards.length;
+      updateCard();
+    }
+
+    function prevWord() {
+      currentIndex = (currentIndex - 1 + flashcards.length) % flashcards.length;
+      updateCard();
+    }
+
+    function flipCard() {
+      card.classList.toggle("flip");
+    }
+
+    updateCard(); // Load từ đầu tiên
+  </script>
+</body>
+</html>
