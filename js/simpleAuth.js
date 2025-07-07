@@ -52,6 +52,6 @@ window.login = async () => {
     alert("Sai tên đăng nhập hoặc mật khẩu!");
   } else {
     alert("Đăng nhập thành công!");
-    window.location.href = "index.html";
+    window.location.href = "flashcard.html";
   }
 };
