@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Danh sách chủ đề | AllENInHere</title>
+  <title>Danh sách chủ đề | AllInEnglish</title>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -27,18 +27,54 @@
       margin-bottom: 15px;
     }
     .topic-card h3 {
-      margin: 0;
+      margin: 0 0 10px;
       color: #333;
     }
     .topic-card p {
-      margin: 5px 0 0;
+      margin: 5px 0;
       color: #666;
       font-size: 14px;
+    }
+    .topic-card button {
+      margin-top: 10px;
+      margin-right: 8px;
+      padding: 8px 12px;
+      border: none;
+      background-color: #1976d2;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .topic-card button:hover {
+      background-color: #1259a7;
+    }
+    #add-topic-form {
+      max-width: 600px;
+      margin: 20px auto;
+      text-align: center;
+    }
+    #add-topic-form a {
+      padding: 12px 20px;
+      background-color: #388e3c;
+      color: white;
+      text-decoration: none;
+      font-size: 16px;
+      border-radius: 6px;
+      display: inline-block;
+    }
+    #add-topic-form a:hover {
+      background: #2e7d32;
     }
   </style>
 </head>
 <body>
   <h2>Các Chủ Đề Bạn Đã Tạo</h2>
+
+  <div id="add-topic-form">
+    <a href="create-topic.html">➕ Thêm chủ đề mới</a>
+  </div>
+
   <div class="topics-container" id="topics-list">
     <!-- Chủ đề sẽ được thêm ở đây -->
   </div>
@@ -50,7 +86,9 @@
       query,
       where,
       getDocs,
-      Timestamp
+      deleteDoc,
+      updateDoc,
+      doc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const owner = localStorage.getItem("loggedInUser");
@@ -61,31 +99,50 @@
       window.location.href = "login.html";
     }
 
-    const q = query(collection(db, "topics"), where("owner", "==", owner));
-    const snapshot = await getDocs(q);
+    async function loadTopics() {
+      listDiv.innerHTML = "<p>Đang tải...</p>";
+      const q = query(collection(db, "topics"), where("owner", "==", owner));
+      const snapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-      listDiv.innerHTML = "<p>Chưa có chủ đề nào.</p>";
-    } else {
-      for (const docItem of snapshot.docs) {
-        const data = docItem.data();
-        const topicId = data.topic_id;
-        const createdDate = data.created_at?.toDate().toLocaleDateString("vi-VN") || "Không rõ";
+      listDiv.innerHTML = "";
+      if (snapshot.empty) {
+        listDiv.innerHTML = "<p>Chưa có chủ đề nào.</p>";
+      } else {
+        for (const docItem of snapshot.docs) {
+          const data = docItem.data();
+          const topicId = data.topic_id;
+          const docId = docItem.id;
+          const createdDate = data.created_at?.toDate().toLocaleDateString("vi-VN") || "Không rõ";
 
-        // Đếm số từ vựng trong topic này
-        const vocabSnapshot = await getDocs(query(collection(db, "vocabularies"), where("topic_id", "==", topicId)));
-        const wordCount = vocabSnapshot.size;
+          const vocabSnapshot = await getDocs(query(collection(db, "vocabularies"), where("topic_id", "==", topicId)));
+          const wordCount = vocabSnapshot.size;
 
-        const topicEl = document.createElement("div");
-        topicEl.className = "topic-card";
-        topicEl.innerHTML = `
-          <h3>${data.name}</h3>
-          <p>Mã chủ đề: ${topicId}</p>
-          <p>Ngày tạo: ${createdDate} | Số từ: ${wordCount}</p>
-        `;
-        listDiv.appendChild(topicEl);
+          const topicEl = document.createElement("div");
+          topicEl.className = "topic-card";
+          topicEl.innerHTML = `
+            <h3 contenteditable="true" onblur="this.dataset.edited && updateTopicName('${docId}', this.textContent)" data-edited="false" oninput="this.dataset.edited=true">${data.name}</h3>
+            <p>Mã chủ đề: ${topicId}</p>
+            <p>Ngày tạo: ${createdDate} | Số từ: ${wordCount}</p>
+            <button onclick="location.href='flashcard.html?topic_id=${topicId}'">Ôn tập</button>
+            <button onclick="deleteTopic('${docId}')" style="background-color:#d32f2f">Xoá</button>
+          `;
+          listDiv.appendChild(topicEl);
+        }
       }
     }
+
+    window.deleteTopic = async (docId) => {
+      if (confirm("Bạn có chắc chắn muốn xoá chủ đề này không?")) {
+        await deleteDoc(doc(db, "topics", docId));
+        loadTopics();
+      }
+    }
+
+    window.updateTopicName = async (docId, newName) => {
+      await updateDoc(doc(db, "topics", docId), { name: newName });
+    }
+
+    loadTopics();
   </script>
 </body>
 </html>
