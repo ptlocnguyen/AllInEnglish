@@ -167,7 +167,7 @@
   <script>
     const user = JSON.parse(localStorage.getItem("currentUser"));
     if (!user) {
-      window.location.href = "login.html";
+      window.location.href = "./login.html";
     } else {
       const welcomeDiv = document.getElementById("welcome");
       welcomeDiv.innerText = `Xin chào, ${user.username}!`;
