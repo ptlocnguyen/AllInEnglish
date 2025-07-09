@@ -124,15 +124,23 @@
             <p>Mã chủ đề: ${topicId}</p>
             <p>Ngày tạo: ${createdDate} | Số từ: ${wordCount}</p>
             <button onclick="location.href='flashcard.html?topic_id=${topicId}'">Ôn tập</button>
-            <button onclick="deleteTopic('${docId}')" style="background-color:#d32f2f">Xoá</button>
+            <button onclick="deleteTopic('${docId}', '${topicId}')" style="background-color:#d32f2f">Xoá</button>
           `;
           listDiv.appendChild(topicEl);
         }
       }
     }
 
-    window.deleteTopic = async (docId) => {
+    window.deleteTopic = async (docId, topicId) => {
       if (confirm("Bạn có chắc chắn muốn xoá chủ đề này không?")) {
+        // Xoá từ vựng liên quan
+        const vocabQuery = query(collection(db, "vocabularies"), where("topic_id", "==", topicId));
+        const vocabSnapshot = await getDocs(vocabQuery);
+        for (const vocabDoc of vocabSnapshot.docs) {
+          await deleteDoc(doc(db, "vocabularies", vocabDoc.id));
+        }
+
+        // Xoá chủ đề
         await deleteDoc(doc(db, "topics", docId));
         loadTopics();
       }
