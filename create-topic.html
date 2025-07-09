@@ -115,6 +115,43 @@
       transform: scale(1.2);
       transition: transform 0.2s;
     }
+    .count-display {
+      font-weight: 500;
+      margin-bottom: 12px;
+      color: #444;
+    }
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.4);
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      color: white;
+      font-size: 18px;
+    }
+    #spinner {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid var(--primary);
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin-bottom: 15px;
+    }
+    #progress-count {
+      margin-top: 10px;
+      font-weight: 400;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
     @media (max-width: 600px) {
       body {
         padding: 10px;
@@ -129,6 +166,11 @@
   </style>
 </head>
 <body>
+  <div id="overlay">
+    <div id="spinner"></div>
+    <div>Đang lưu chủ đề và từ vựng, vui lòng chờ...</div>
+    <div id="progress-count"></div>
+  </div>
   <div class="container">
     <h2>Tạo Chủ Đề Mới</h2>
 
@@ -141,6 +183,7 @@
     <label for="excel-file">Hoặc chọn file Excel (.xlsx) để tải từ vựng</label>
     <input type="file" id="excel-file" accept=".xlsx, .xls" />
 
+    <p class="count-display" id="word-count">Số từ hợp lệ: 0</p>
     <button id="btn-create">Tạo chủ đề</button>
     <div class="preview" id="preview-box"></div>
   </div>
@@ -161,20 +204,28 @@
     const vocabInput = document.getElementById("vocab-list");
     const previewBox = document.getElementById("preview-box");
     const excelFileInput = document.getElementById("excel-file");
+    const wordCountDisplay = document.getElementById("word-count");
+    const overlay = document.getElementById("overlay");
+    const progressCount = document.getElementById("progress-count");
 
     function updatePreview() {
       const lines = vocabInput.value.trim().split("\n").filter(Boolean);
       let html = "<strong>Xem trước:</strong><ul>";
+      let validCount = 0;
+
       lines.forEach((line, index) => {
         const [word, meaning] = line.split("-").map(s => s.trim());
         if (word && meaning) {
+          validCount++;
           html += `<li><span><strong>${word}</strong>: ${meaning}</span> <button class='remove-btn' data-index='${index}'>&times;</button></li>`;
         } else {
           html += `<li style='color:red'><span>Dòng lỗi: ${line}</span> <button class='remove-btn' data-index='${index}'>&times;</button></li>`;
         }
       });
+
       html += "</ul>";
       previewBox.innerHTML = html;
+      wordCountDisplay.textContent = `Số từ hợp lệ: ${validCount}`;
 
       previewBox.querySelectorAll(".remove-btn").forEach(btn => {
         btn.addEventListener("click", () => {
@@ -216,32 +267,46 @@
         return;
       }
 
-      const topicRef = await addDoc(collection(db, "topics"), {
-        name,
-        owner,
-        created_at: Timestamp.now(),
-        topic_id: ""
-      });
+      try {
+        overlay.style.display = "flex";
+        progressCount.textContent = "";
 
-      await updateDoc(doc(db, "topics", topicRef.id), {
-        topic_id: topicRef.id
-      });
+        const topicRef = await addDoc(collection(db, "topics"), {
+          name,
+          owner,
+          created_at: Timestamp.now(),
+          topic_id: ""
+        });
 
-      const vocabLines = vocabText.split('\n').map(l => l.trim()).filter(Boolean);
+        await updateDoc(doc(db, "topics", topicRef.id), {
+          topic_id: topicRef.id
+        });
 
-      for (const line of vocabLines) {
-        const [word, meaning] = line.split("-").map(s => s.trim());
-        if (word && meaning) {
-          await addDoc(collection(db, "vocabularies"), {
-            word,
-            meaning,
-            topic_id: topicRef.id
-          });
+        const vocabLines = vocabText.split('\n').map(l => l.trim()).filter(Boolean);
+        let added = 0;
+        const total = vocabLines.length;
+
+        for (const line of vocabLines) {
+          const [word, meaning] = line.split("-").map(s => s.trim());
+          if (word && meaning) {
+            await addDoc(collection(db, "vocabularies"), {
+              word,
+              meaning,
+              topic_id: topicRef.id
+            });
+            added++;
+            progressCount.textContent = `Đã lưu ${added}/${total} từ...`;
+          }
         }
-      }
 
-      alert("Tạo chủ đề thành công!");
-      window.location.href = "topics.html";
+        alert("Tạo chủ đề thành công!");
+        window.location.href = "topics.html";
+      } catch (err) {
+        console.error(err);
+        alert("Đã xảy ra lỗi khi tạo chủ đề.");
+      } finally {
+        overlay.style.display = "none";
+      }
     });
 
     updatePreview();

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chỉnh sửa chủ đề | AllInEnglish</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f3f6f9;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      max-width: 700px;
+      background: #fff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      width: 100%;
+    }
+    h2 {
+      text-align: center;
+      color: #1976d2;
+      margin-bottom: 20px;
+    }
+    label {
+      font-weight: bold;
+      margin-top: 12px;
+      display: block;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      background-color: #388e3c;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #2e7d32;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 20px;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #ddd;
+      padding: 8px 0;
+      flex-wrap: wrap;
+    }
+    li input {
+      flex: 1;
+      min-width: 100px;
+    }
+    .delete-btn {
+      color: red;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 20px;
+    }
+    .save-word-btn {
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Chỉnh sửa Chủ Đề</h2>
+    <label for="topic-name">Tên chủ đề</label>
+    <input type="text" id="topic-name" />
+    <button id="save-btn">Lưu thay đổi tên chủ đề</button>
+
+    <h3>Danh sách từ vựng</h3>
+    <ul id="vocab-list"></ul>
+  </div>
+
+  <script type="module">
+    import { db } from './js/firebaseConfig.js';
+    import {
+      doc,
+      getDoc,
+      updateDoc,
+      collection,
+      query,
+      where,
+      getDocs,
+      deleteDoc
+    } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const docId = params.get("doc_id");
+    const topicId = params.get("topic_id");
+
+    const topicNameInput = document.getElementById("topic-name");
+    const vocabListEl = document.getElementById("vocab-list");
+
+    if (!docId || !topicId) {
+      alert("Không tìm thấy chủ đề.");
+      window.location.href = "topics.html";
+    }
+
+    async function loadTopic() {
+      const docRef = doc(db, "topics", docId);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        topicNameInput.value = docSnap.data().name;
+      }
+
+      const vocabQuery = query(collection(db, "vocabularies"), where("topic_id", "==", topicId));
+      const snapshot = await getDocs(vocabQuery);
+      vocabListEl.innerHTML = "";
+
+      snapshot.forEach(docItem => {
+        const data = docItem.data();
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <input type="text" value="${data.word}" data-id="${docItem.id}" class="word-input" />
+          <input type="text" value="${data.meaning}" data-id="${docItem.id}" class="meaning-input" />
+          <button class="save-word-btn" onclick="updateVocab('${docItem.id}')">Lưu</button>
+          <span class="delete-btn" onclick="deleteVocab('${docItem.id}')">&times;</span>
+        `;
+        vocabListEl.appendChild(li);
+      });
+    }
+
+    document.getElementById("save-btn").addEventListener("click", async () => {
+      const newName = topicNameInput.value.trim();
+      if (!newName) {
+        alert("Tên chủ đề không được để trống.");
+        return;
+      }
+      await updateDoc(doc(db, "topics", docId), { name: newName });
+      alert("Đã cập nhật tên chủ đề.");
+      window.location.href = "topics.html";
+    });
+
+    window.deleteVocab = async (vocabId) => {
+      if (confirm("Bạn có chắc muốn xoá từ này?")) {
+        await deleteDoc(doc(db, "vocabularies", vocabId));
+        loadTopic();
+      }
+    }
+
+    window.updateVocab = async (vocabId) => {
+      const wordInput = document.querySelector(`input.word-input[data-id='${vocabId}']`);
+      const meaningInput = document.querySelector(`input.meaning-input[data-id='${vocabId}']`);
+
+      const word = wordInput.value.trim();
+      const meaning = meaningInput.value.trim();
+
+      if (!word || !meaning) {
+        alert("Không được để trống từ hoặc nghĩa.");
+        return;
+      }
+
+      await updateDoc(doc(db, "vocabularies", vocabId), {
+        word,
+        meaning
+      });
+
+      alert("Đã lưu thay đổi cho từ vựng.");
+    }
+
+    window.addEventListener("DOMContentLoaded", loadTopic);
+  </script>
+</body>
+</html>
