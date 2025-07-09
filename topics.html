@@ -91,7 +91,8 @@
       doc
     } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-    const owner = localStorage.getItem("loggedInUser");
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+    const owner = currentUser?.username;
     const listDiv = document.getElementById("topics-list");
 
     if (!owner) {
