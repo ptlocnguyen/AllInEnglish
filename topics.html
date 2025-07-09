@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Danh sách chủ đề | AllENInHere</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f3f6f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h2 {
+      color: #1976d2;
+      text-align: center;
+    }
+    .topics-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .topic-card {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 15px 20px;
+      margin-bottom: 15px;
+    }
+    .topic-card h3 {
+      margin: 0;
+      color: #333;
+    }
+    .topic-card p {
+      margin: 5px 0 0;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Các Chủ Đề Bạn Đã Tạo</h2>
+  <div class="topics-container" id="topics-list">
+    <!-- Chủ đề sẽ được thêm ở đây -->
+  </div>
+
+  <script type="module">
+    import { db } from './js/firebaseConfig.js';
+    import {
+      collection,
+      query,
+      where,
+      getDocs,
+      Timestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const owner = localStorage.getItem("loggedInUser");
+    const listDiv = document.getElementById("topics-list");
+
+    if (!owner) {
+      alert("Bạn chưa đăng nhập.");
+      window.location.href = "login.html";
+    }
+
+    const q = query(collection(db, "topics"), where("owner", "==", owner));
+    const snapshot = await getDocs(q);
+
+    if (snapshot.empty) {
+      listDiv.innerHTML = "<p>Chưa có chủ đề nào.</p>";
+    } else {
+      for (const docItem of snapshot.docs) {
+        const data = docItem.data();
+        const topicId = data.topic_id;
+        const createdDate = data.created_at?.toDate().toLocaleDateString("vi-VN") || "Không rõ";
+
+        // Đếm số từ vựng trong topic này
+        const vocabSnapshot = await getDocs(query(collection(db, "vocabularies"), where("topic_id", "==", topicId)));
+        const wordCount = vocabSnapshot.size;
+
+        const topicEl = document.createElement("div");
+        topicEl.className = "topic-card";
+        topicEl.innerHTML = `
+          <h3>${data.name}</h3>
+          <p>Mã chủ đề: ${topicId}</p>
+          <p>Ngày tạo: ${createdDate} | Số từ: ${wordCount}</p>
+        `;
+        listDiv.appendChild(topicEl);
+      }
+    }
+  </script>
+</body>
+</html>

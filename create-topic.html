@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Tạo Bộ Từ Vựng | AllENInHere</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+    body {
+      background: #f0f4f8;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h2 { color: #1976d2; }
+    .form-container, .word-list {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      width: 100%;
+      max-width: 500px;
+      margin-top: 20px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px 16px;
+      background-color: #1976d2;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    ul {
+      padding-left: 20px;
+    }
+    li {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tạo Bộ Từ Vựng Mới</h2>
+
+  <div class="form-container">
+    <label>Tên chủ đề:</label>
+    <input type="text" id="topic-name" placeholder="VD: Động vật">
+
+    <label>Từ tiếng Anh:</label>
+    <input type="text" id="vocab-word" placeholder="VD: cat">
+
+    <label>Nghĩa tiếng Việt:</label>
+    <input type="text" id="vocab-meaning" placeholder="VD: mèo">
+
+    <button onclick="addWord()">Thêm từ</button>
+
+    <div class="word-list">
+      <h4>Từ đã thêm:</h4>
+      <ul id="word-list"></ul>
+    </div>
+
+    <button onclick="saveTopic()" style="margin-top: 15px;">Lưu chủ đề</button>
+  </div>
+
+  <script type="module">
+    import { db } from './js/firebaseConfig.js';
+    import {
+      collection,
+      addDoc,
+      updateDoc,
+      doc,
+      serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const words = [];
+
+    window.addWord = () => {
+      const word = document.getElementById('vocab-word').value.trim();
+      const meaning = document.getElementById('vocab-meaning').value.trim();
+
+      if (!word || !meaning) {
+        alert("Vui lòng nhập cả từ và nghĩa.");
+        return;
+      }
+
+      words.push({ word, meaning });
+      document.getElementById('word-list').innerHTML += `<li>${word} - ${meaning}</li>`;
+      document.getElementById('vocab-word').value = '';
+      document.getElementById('vocab-meaning').value = '';
+    };
+
+    window.saveTopic = async () => {
+      const topicName = document.getElementById('topic-name').value.trim();
+      const owner = localStorage.getItem("loggedInUser");
+
+      if (!owner) {
+        alert("Bạn chưa đăng nhập!");
+        return;
+      }
+      if (!topicName || words.length === 0) {
+        alert("Vui lòng nhập tên chủ đề và ít nhất 1 từ vựng.");
+        return;
+      }
+
+      try {
+        // Bước 1: Tạo topic mới KHÔNG có topic_id ban đầu
+        const topicRef = await addDoc(collection(db, "topics"), {
+          owner,
+          name: topicName,
+          created_at: serverTimestamp()
+        });
+
+        // Bước 2: cập nhật topic_id cho document vừa tạo
+        await updateDoc(doc(db, "topics", topicRef.id), {
+          topic_id: topicRef.id
+        });
+
+        // Bước 3: lưu từng từ vựng vào vocabularies
+        for (const item of words) {
+          await addDoc(collection(db, "vocabularies"), {
+            topic_id: topicRef.id,
+            word: item.word,
+            meaning: item.meaning,
+            created_at: serverTimestamp()
+          });
+        }
+
+        alert("Đã lưu chủ đề và từ vựng thành công!");
+        location.reload();
+      } catch (e) {
+        console.error("Lỗi khi lưu: ", e);
+        alert("Lỗi khi lưu chủ đề.");
+      }
+    };
+  </script>
+</body>
+</html>

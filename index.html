@@ -1,143 +1,54 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <title>Đăng nhập / Đăng ký | AllENInHere</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Trang chủ | AllENInHere</title>
   <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Roboto', sans-serif;
-    }
-
     body {
       margin: 0;
-      padding: 0;
-      background: #f0f4f8;
+      font-family: Arial, sans-serif;
+      background-color: #f8f9fa;
       display: flex;
+      justify-content: center;
       align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      height: 100vh;
+      flex-direction: column;
     }
-
-    .container {
-      background: #fff;
-      padding: 30px 40px;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      width: 100%;
-      max-width: 400px;
+    h1 {
+      color: #2c3e50;
     }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-      color: #333;
+    .btn-group {
+      margin-top: 20px;
     }
-
-    .tabs {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 20px;
-    }
-
-    .tabs button {
-      flex: 1;
-      padding: 10px;
-      background-color: #e3f2fd;
+    button {
+      padding: 10px 20px;
+      margin: 0 10px;
       border: none;
-      font-weight: bold;
+      background-color: #007bff;
+      color: white;
+      border-radius: 5px;
       cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .tabs button.active {
-      background-color: #1976d2;
-      color: white;
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-    }
-
-    input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    button.submit {
-      width: 100%;
-      padding: 12px;
-      background-color: #1976d2;
-      color: white;
-      border: none;
-      border-radius: 6px;
       font-size: 16px;
-      cursor: pointer;
-      transition: background-color 0.3s;
     }
-
-    button.submit:hover {
-      background-color: #0d47a1;
-    }
-
-    .form-section {
-      display: none;
-    }
-
-    .form-section.active {
-      display: block;
+    button:hover {
+      background-color: #0056b3;
     }
   </style>
 </head>
 <body>
-
-  <div class="container">
-    <h2>All In English</h2>
-
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('login')">Đăng nhập</button>
-      <button class="tab-btn" onclick="switchTab('register')">Đăng ký</button>
-    </div>
-
-    <!-- Đăng nhập -->
-    <div id="login-section" class="form-section active">
-      <div class="form-group">
-        <input id="login-username" type="text" placeholder="Tên đăng nhập">
-      </div>
-      <div class="form-group">
-        <input id="login-password" type="password" placeholder="Mật khẩu">
-      </div>
-      <button class="submit" onclick="login()">Đăng nhập</button>
-    </div>
-
-    <!-- Đăng ký -->
-    <div id="register-section" class="form-section">
-      <div class="form-group">
-        <input id="reg-username" type="text" placeholder="Tên đăng nhập">
-      </div>
-      <div class="form-group">
-        <input id="reg-password" type="password" placeholder="Mật khẩu">
-      </div>
-      <button class="submit" onclick="register()">Đăng ký</button>
-    </div>
+  <h1>Chào mừng đến với AllENInHere</h1>
+  <div class="btn-group">
+    <button onclick="location.href='create-topic.html'">Tạo chủ đề</button>
+    <button onclick="location.href='flashcard.html'">Ôn tập Flashcard</button>
   </div>
 
   <script>
-    function switchTab(tab) {
-      document.querySelectorAll('.form-section').forEach(el => el.classList.remove('active'));
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.getElementById(`${tab}-section`).classList.add('active');
-      event.target.classList.add('active');
+    // Nếu chưa đăng nhập, chuyển về login.html
+    const username = localStorage.getItem("loggedInUser");
+    if (!username) {
+      window.location.href = "login.html";
     }
   </script>
-
-  <!-- JavaScript xử lý đăng ký/đăng nhập -->
-  <script type="module" src="js/simpleAuth.js"></script>
-
 </body>
+</html>
