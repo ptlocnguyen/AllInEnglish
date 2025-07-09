@@ -66,9 +66,9 @@
   </main>
 
   <script>
-    const loggedInUser = localStorage.getItem("loggedInUser");
+    const loggedInUser = JSON.parse(localStorage.getItem("currentUser"));
     if (!loggedInUser) {
-      window.location.href = "./login.html";
+      window.location.href = "login.html";
     }
   </script>
 </body>
