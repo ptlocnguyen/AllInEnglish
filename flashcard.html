@@ -2,8 +2,8 @@
 <html lang="vi">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Flashcard | AllInEnglish</title>
   <style>
     body {
@@ -40,13 +40,14 @@
 
     .card-wrapper {
       perspective: 1000px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       display: flex;
       justify-content: center;
       align-items: center;
       width: 100%;
       max-width: 500px;
       aspect-ratio: 5 / 3;
+      position: relative;
     }
 
     .flashcard {
@@ -93,6 +94,32 @@
       transform: rotateY(180deg);
     }
 
+    .note-icon {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+      background: white;
+      color: #1976d2;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0;
+      cursor: pointer;
+      z-index: 10;
+      line-height: 1;
+      transition: background 0.3s, transform 0.2s;
+    }
+
+    .note-icon:hover {
+      background: #e3f2fd;
+      transform: scale(1.1);
+    }
+
     .controls {
       display: flex;
       justify-content: center;
@@ -101,7 +128,7 @@
       margin-top: 10px;
     }
 
-    button {
+    .controls button {
       padding: 12px 16px;
       background-color: #1976d2;
       color: white;
@@ -109,19 +136,17 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 16px;
-      flex: 1 1 100px;
+      min-width: 100px;
+      transition: background-color 0.3s ease;
     }
 
-    button:disabled {
+    .controls button:hover:not(:disabled) {
+      background-color: #125ea6;
+    }
+
+    .controls button:disabled {
       background-color: #ccc;
       cursor: default;
-    }
-
-    @media (min-width: 600px) {
-      button {
-        flex: unset;
-        min-width: 120px;
-      }
     }
 
     .slide-transition {
@@ -130,14 +155,124 @@
 
     @keyframes slideInRight {
       0% {
-        scale: 0.3;
+        transform: translateX(50%) scale(0.8);
         opacity: 0;
       }
 
       100% {
-        scale: 1;
+        transform: translateX(0) scale(1);
         opacity: 1;
       }
+    }
+
+    .popup-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .popup-overlay.active {
+      display: flex;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .popup {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      max-width: 95%;
+      width: 400px;
+      position: relative;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+      animation: scaleIn 0.3s ease;
+    }
+
+    @keyframes scaleIn {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .popup h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      color: #1976d2;
+      font-size: 20px;
+    }
+
+    .popup textarea {
+      width: 100%;
+      height: 100px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      resize: vertical;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+      background: #eee;
+      color: #333;
+      border: none;
+      border-radius: 4px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      background: #ddd;
+      color: #000;
+    }
+
+    #savePopupNote {
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      background-color: #1976d2;
+      color: white;
+      font-size: 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    #savePopupNote:hover {
+      background-color: #125ea6;
     }
   </style>
 </head>
@@ -148,26 +283,30 @@
   <div id="card-counter">Từ 0/0</div>
   <div class="card-wrapper">
     <div class="flashcard" id="flashcard">
+      <button class="note-icon" id="openNote">✏</button>
       <div class="card-face card-front" id="card-front">Đang tải...</div>
       <div class="card-face card-back" id="card-back">...</div>
     </div>
   </div>
+
   <div class="controls">
     <button id="prevBtn">◀ Trước</button>
     <button id="nextBtn">Tiếp ▶</button>
     <button id="shuffleBtn">🔀 Trộn</button>
   </div>
 
+  <div class="popup-overlay" id="notePopup">
+    <div class="popup">
+      <button class="close-btn" id="closePopup">×</button>
+      <h3>Ghi chú từ vựng</h3>
+      <textarea id="popupNote" placeholder="Nhập ghi chú tại đây..."></textarea>
+      <button id="savePopupNote">💾 Lưu ghi chú</button>
+    </div>
+  </div>
+
   <script type="module">
     import { db } from './js/firebaseConfig.js';
-    import {
-      collection,
-      query,
-      where,
-      getDocs,
-      doc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const flashcard = document.getElementById("flashcard");
     const front = document.getElementById("card-front");
@@ -177,6 +316,11 @@
     const shuffleBtn = document.getElementById("shuffleBtn");
     const counter = document.getElementById("card-counter");
     const topicName = document.getElementById("topic-name");
+    const notePopup = document.getElementById("notePopup");
+    const openNote = document.getElementById("openNote");
+    const popupNote = document.getElementById("popupNote");
+    const savePopupNote = document.getElementById("savePopupNote");
+    const closePopup = document.getElementById("closePopup");
 
     const urlParams = new URLSearchParams(window.location.search);
     const topicId = urlParams.get("topic_id");
@@ -201,28 +345,8 @@
       const q = query(collection(db, "vocabularies"), where("topic_id", "==", topicId));
       const snapshot = await getDocs(q);
 
-      const stored = localStorage.getItem("shuffledOrder");
-      if (stored) {
-        const temp = JSON.parse(stored);
-        if (temp.length > 0 && temp[0].topic_id === topicId) {
-          cards = temp;
-        } else {
-          localStorage.removeItem("shuffledOrder");
-          cards = snapshot.docs.map(doc => doc.data());
-        }
-      } else {
-        cards = snapshot.docs.map(doc => doc.data());
-      }
-
-      if (cards.length === 0) {
-        front.innerText = "Chủ đề này chưa có từ vựng.";
-        prevBtn.disabled = true;
-        nextBtn.disabled = true;
-        shuffleBtn.disabled = true;
-        counter.innerText = "Từ 0/0";
-      } else {
-        renderCard();
-      }
+      cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderCard();
     }
 
     function renderCard() {
@@ -232,13 +356,16 @@
       front.innerText = currentCard.word;
       back.innerText = currentCard.meaning;
       counter.innerText = `Từ ${current + 1}/${cards.length}`;
+      popupNote.value = currentCard.comment || "";
       flashcard.classList.add("slide-transition");
       setTimeout(() => flashcard.classList.remove("slide-transition"), 650);
     }
 
-    flashcard.addEventListener("click", () => {
-      flipped = !flipped;
-      flashcard.classList.toggle("flipped", flipped);
+    flashcard.addEventListener("click", (e) => {
+      if (e.target !== openNote) {
+        flipped = !flipped;
+        flashcard.classList.toggle("flipped", flipped);
+      }
     });
 
     prevBtn.addEventListener("click", () => {
@@ -260,9 +387,39 @@
         const j = Math.floor(Math.random() * (i + 1));
         [cards[i], cards[j]] = [cards[j], cards[i]];
       }
-      localStorage.setItem("shuffledOrder", JSON.stringify(cards));
       current = 0;
       renderCard();
+    });
+
+    openNote.addEventListener("click", (e) => {
+      e.stopPropagation();
+      notePopup.classList.add("active");
+    });
+
+    closePopup.addEventListener("click", () => {
+      notePopup.classList.remove("active");
+    });
+
+    document.addEventListener("click", (event) => {
+      if (notePopup.classList.contains("active") &&
+        !notePopup.querySelector(".popup").contains(event.target) &&
+        event.target !== openNote) {
+        notePopup.classList.remove("active");
+      }
+    });
+
+    savePopupNote.addEventListener("click", async () => {
+      const card = cards[current];
+      const note = popupNote.value;
+      try {
+        await updateDoc(doc(db, "vocabularies", card.id), { comment: note });
+        alert("Đã lưu ghi chú cho từ: " + card.word);
+        cards[current].comment = note;
+        notePopup.classList.remove("active");
+      } catch (err) {
+        alert("Lỗi khi lưu ghi chú.");
+        console.error(err);
+      }
     });
   </script>
 </body>
