@@ -121,7 +121,7 @@
           const topicEl = document.createElement("div");
           topicEl.className = "topic-card";
           topicEl.innerHTML = `
-            <h3 contenteditable="true" onblur="this.dataset.edited && updateTopicName('${docId}', this.textContent)" data-edited="false" oninput="this.dataset.edited=true">${data.name}</h3>
+            <h3 contenteditable="false" onblur="this.dataset.edited && updateTopicName('${docId}', this.textContent)" data-edited="false" oninput="this.dataset.edited=true">${data.name}</h3>
             <p>Mã chủ đề: ${topicId}</p>
             <p>Ngày tạo: ${createdDate} | Số từ: ${wordCount}</p>
             <button onclick="location.href='flashcard.html?topic_id=${topicId}'">Ôn tập</button>
