@@ -258,7 +258,8 @@
     });
 
     btn.addEventListener("click", async () => {
-      const owner = localStorage.getItem("loggedInUser");
+      const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+      const owner = currentUser?.username;
       const name = document.getElementById("topic-name").value.trim();
       const vocabText = vocabInput.value.trim();
 
