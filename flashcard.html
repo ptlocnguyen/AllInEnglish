@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -76,6 +75,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      flex-direction: column;
       padding: 20px;
       font-size: clamp(20px, 5vw, 36px);
       font-weight: bold;
@@ -92,6 +92,21 @@
       background-color: #1976d2;
       color: white;
       transform: rotateY(180deg);
+    }
+
+    .card-note {
+      font-size: 14px;
+      font-style: italic;
+      background-color: rgba(255, 255, 255, 0.85);
+      color: #333;
+      padding: 8px 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      max-height: 70px;
+      overflow-y: auto;
+      word-break: break-word;
+      width: 100%;
+      margin-top: 12px;
     }
 
     .note-icon {
@@ -158,7 +173,6 @@
         transform: translateX(50%) scale(0.8);
         opacity: 0;
       }
-
       100% {
         transform: translateX(0) scale(1);
         opacity: 1;
@@ -184,13 +198,8 @@
     }
 
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .popup {
@@ -205,15 +214,8 @@
     }
 
     @keyframes scaleIn {
-      from {
-        transform: scale(0.9);
-        opacity: 0;
-      }
-
-      to {
-        transform: scale(1);
-        opacity: 1;
-      }
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
     }
 
     .popup h3 {
@@ -284,8 +286,14 @@
   <div class="card-wrapper">
     <div class="flashcard" id="flashcard">
       <button class="note-icon" id="openNote">✏</button>
-      <div class="card-face card-front" id="card-front">Đang tải...</div>
-      <div class="card-face card-back" id="card-back">...</div>
+      <div class="card-face card-front">
+        <div id="card-front-text">Đang tải...</div>
+        <div id="card-note-front" class="card-note" style="display:none;"></div>
+      </div>
+      <div class="card-face card-back">
+        <div id="card-back-text">...</div>
+        <div id="card-note-back" class="card-note" style="display:none;"></div>
+      </div>
     </div>
   </div>
 
@@ -309,13 +317,17 @@
     import { collection, query, where, getDocs, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const flashcard = document.getElementById("flashcard");
-    const front = document.getElementById("card-front");
-    const back = document.getElementById("card-back");
+    const cardFrontText = document.getElementById("card-front-text");
+    const cardBackText = document.getElementById("card-back-text");
+    const noteFront = document.getElementById("card-note-front");
+    const noteBack = document.getElementById("card-note-back");
+
     const prevBtn = document.getElementById("prevBtn");
     const nextBtn = document.getElementById("nextBtn");
     const shuffleBtn = document.getElementById("shuffleBtn");
     const counter = document.getElementById("card-counter");
     const topicName = document.getElementById("topic-name");
+
     const notePopup = document.getElementById("notePopup");
     const openNote = document.getElementById("openNote");
     const popupNote = document.getElementById("popupNote");
@@ -330,7 +342,7 @@
     let flipped = false;
 
     if (!topicId) {
-      front.innerText = "Không tìm thấy chủ đề.";
+      cardFrontText.innerText = "Không tìm thấy chủ đề.";
       prevBtn.disabled = true;
       nextBtn.disabled = true;
       shuffleBtn.disabled = true;
@@ -353,10 +365,18 @@
       flashcard.classList.remove("flipped");
       flipped = false;
       const currentCard = cards[current];
-      front.innerText = currentCard.word;
-      back.innerText = currentCard.meaning;
+      cardFrontText.innerText = currentCard.word;
+      cardBackText.innerText = currentCard.meaning;
       counter.innerText = `Từ ${current + 1}/${cards.length}`;
+
       popupNote.value = currentCard.comment || "";
+
+      const showNote = currentCard.comment && currentCard.comment.trim();
+      noteFront.style.display = showNote ? "block" : "none";
+      noteBack.style.display = showNote ? "block" : "none";
+      noteFront.innerText = "📌 " + currentCard.comment;
+      noteBack.innerText = "📌 " + currentCard.comment;
+
       flashcard.classList.add("slide-transition");
       setTimeout(() => flashcard.classList.remove("slide-transition"), 650);
     }
@@ -415,6 +435,7 @@
         await updateDoc(doc(db, "vocabularies", card.id), { comment: note });
         alert("Đã lưu ghi chú cho từ: " + card.word);
         cards[current].comment = note;
+        renderCard(); // cập nhật lại giao diện ngay
         notePopup.classList.remove("active");
       } catch (err) {
         alert("Lỗi khi lưu ghi chú.");
@@ -423,5 +444,4 @@
     });
   </script>
 </body>
-
 </html>
