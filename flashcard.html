@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -101,7 +102,7 @@
       color: #333;
       padding: 8px 10px;
       border-radius: 6px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
       max-height: 70px;
       overflow-y: auto;
       word-break: break-word;
@@ -133,6 +134,14 @@
     .note-icon:hover {
       background: #e3f2fd;
       transform: scale(1.1);
+    }
+
+    #noteBtn {
+      right: 10px;
+    }
+
+    #speakBtn {
+      left: 10px;
     }
 
     .controls {
@@ -173,6 +182,7 @@
         transform: translateX(50%) scale(0.8);
         opacity: 0;
       }
+
       100% {
         transform: translateX(0) scale(1);
         opacity: 1;
@@ -198,8 +208,13 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
     }
 
     .popup {
@@ -214,8 +229,15 @@
     }
 
     @keyframes scaleIn {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
     }
 
     .popup h3 {
@@ -285,6 +307,7 @@
   <div id="card-counter">Từ 0/0</div>
   <div class="card-wrapper">
     <div class="flashcard" id="flashcard">
+      <button class="note-icon" id="speakBtn">🔊</button>
       <button class="note-icon" id="openNote">✏</button>
       <div class="card-face card-front">
         <div id="card-front-text">Đang tải...</div>
@@ -435,13 +458,27 @@
         await updateDoc(doc(db, "vocabularies", card.id), { comment: note });
         alert("Đã lưu ghi chú cho từ: " + card.word);
         cards[current].comment = note;
-        renderCard(); // cập nhật lại giao diện ngay
+        renderCard();
         notePopup.classList.remove("active");
       } catch (err) {
         alert("Lỗi khi lưu ghi chú.");
         console.error(err);
       }
     });
+
+    //Xử lý sự kiện đọc từ vựng
+    const speakBtn = document.getElementById("speakBtn");
+
+    speakBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const word = cards[current]?.word;
+      if (!word) return;
+
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-US";
+      speechSynthesis.speak(utterance);
+    });
   </script>
 </body>
+
 </html>
